@@ -15,6 +15,28 @@
 
 <main>
 
+    <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+            <p class="hero-eyebrow">GATEPASS / BICOL EVENTS</p>
+            <h2 id="hero-title">Make room for a night worth remembering.</h2>
+            <p>Find your people, discover something new, and get your next great night out on the calendar.</p>
+            <a class="hero-cta" href="#register">Register Now</a>
+        </div>
+
+        <div class="hero-highlights" role="group" aria-label="Upcoming event highlights">
+            <p class="hero-highlights-title">Coming up in Bicol</p>
+            <?php foreach ($events as $event): ?>
+            <div class="hero-event">
+                <span class="hero-event-icon" aria-hidden="true">&#10022;</span>
+                <span>
+                    <strong><?= e($event['name']) ?></strong>
+                    <small><?= e($event['date']) ?></small>
+                </span>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </section>
+
     <!-- RECEIPT: shows once after a successful registration -->
     <?php if ($receipt !== null): ?>
     <section class="receipt">
@@ -39,7 +61,7 @@
 
 
     <!-- REGISTRATION FORM -->
-    <section class="box">
+    <section class="box" id="register">
         <h2>Register</h2>
 
         <!-- Error messages -->
