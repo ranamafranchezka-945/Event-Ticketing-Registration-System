@@ -25,7 +25,20 @@ if (!isset($_SESSION['registrations'])) {
     $_SESSION['registrations'] = [];
 }
 
+$legacy_event_details = [
+    'techfest' => ['name' => 'Bicol TechFest', 'date' => 'Nov 14, 2026'],
+    'sound'    => ['name' => 'Kabsat Sound Fest', 'date' => 'Dec 05, 2026'],
+    'artwalk'  => ['name' => 'Art and Food Walk', 'date' => 'Dec 19, 2026'],
+];
+
 foreach ($_SESSION['registrations'] as &$registration) {
+    if (!isset($registration['event_name']) && isset($legacy_event_details[$registration['event']])) {
+        $registration['event_name'] = $legacy_event_details[$registration['event']]['name'];
+    }
+    if (!isset($registration['event_date']) && isset($legacy_event_details[$registration['event']])) {
+        $registration['event_date'] = $legacy_event_details[$registration['event']]['date'];
+    }
+
     $registration['total'] = calculate_ticket_total(
         (float) $tiers[$registration['tier']]['price'],
         (int) $registration['qty']
@@ -42,7 +55,9 @@ $event     = $_POST['event'] ?? '';
 $tier      = $_POST['tier'] ?? '';
 $qty       = $_POST['qty'] ?? '1';
 $agree     = $_POST['agree'] ?? '';
+$event_date = $_POST['event_date'] ?? '';
 $temp_badge = $_SESSION['temp_badge'] ?? null;
+$selected_schedule = null;
 
 $errors = [];
 
@@ -78,6 +93,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Event and tier must be one of our choices
     if (!array_key_exists($event, $events)) {
         $errors[] = 'Please choose an event.';
+    }
+    if (empty($_POST['event_date'])) {
+        $errors[] = 'Please choose an event date.';
+    } elseif (array_key_exists($event, $events)) {
+        foreach ($events[$event]['schedule'] as $scheduled_day) {
+            if ($event_date === $scheduled_day['date']) {
+                $selected_schedule = $scheduled_day;
+                break;
+            }
+        }
+
+        if ($selected_schedule === null) {
+            $errors[] = 'Please choose a valid date for the selected event.';
+        }
+    } else {
+        $errors[] = 'Please choose a valid date for the selected event.';
     }
     if (!array_key_exists($tier, $tiers)) {
         $errors[] = 'Please choose a ticket tier.';
@@ -184,6 +215,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'email'     => $email,
                 'age'       => (int) $age,
                 'event'     => $event,
+                'event_name' => $events[$event]['name'],
+                'event_date' => $event_date,
+                'event_guest' => $selected_schedule['guest'],
                 'tier'      => $tier,
                 'qty'       => (int) $qty,
                 'photo'     => $new_file_name,

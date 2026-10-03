@@ -4,9 +4,38 @@ const MIN_NAME_LENGTH = 4;                // change 4 to 8 for the live challeng
 
 // ---------- DATA (multidimensional associative arrays) ----------
 $events = [
-    'techfest' => ['name' => 'Bicol TechFest',    'date' => 'Nov 14, 2026', 'venue' => 'Naga Convention Hall'],
-    'sound'    => ['name' => 'Kabsat Sound Fest', 'date' => 'Dec 05, 2026', 'venue' => 'Penafrancia Grounds'],
-    'artwalk'  => ['name' => 'Art and Food Walk', 'date' => 'Dec 19, 2026', 'venue' => 'Magsaysay Avenue'],
+    'chezka_comeback' => [
+        'name' => '3C: Chezka’s Comeback Concert',
+        'date' => 'November 4, 2026',
+        'schedule' => [
+            ['day' => 'Day 1', 'date' => 'November 4, 2026', 'guest' => 'Pia Jane Lastrollo'],
+            ['day' => 'Day 2', 'date' => 'November 6, 2026', 'guest' => 'Angel Charm Rabino'],
+        ],
+    ],
+    'techfest_after_dark' => [
+        'name' => 'Bicol TechFest After Dark',
+        'date' => 'November 14, 2026',
+        'schedule' => [
+            ['day' => 'Day 1', 'date' => 'November 14, 2026', 'guest' => ''],
+            ['day' => 'Day 2', 'date' => 'November 15, 2026', 'guest' => ''],
+        ],
+    ],
+    'midnight_music_fest' => [
+        'name' => 'Midnight Music Fest',
+        'date' => 'December 5, 2026',
+        'schedule' => [
+            ['day' => 'Day 1', 'date' => 'December 5, 2026', 'guest' => ''],
+            ['day' => 'Day 2', 'date' => 'December 7, 2026', 'guest' => ''],
+        ],
+    ],
+    'cyberglow_esports_night' => [
+        'name' => 'CyberGlow E-Sports Night',
+        'date' => 'January 24, 2027',
+        'schedule' => [
+            ['day' => 'Day 1', 'date' => 'January 24, 2027', 'guest' => ''],
+            ['day' => 'Day 2', 'date' => 'January 26, 2027', 'guest' => ''],
+        ],
+    ],
 ];
 
 $tiers = [

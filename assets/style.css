@@ -156,6 +156,26 @@ input[type=text], select, input[type=file] {
 }
 input:focus, select:focus, button:focus { outline: 3px solid var(--line); border-color: var(--pink); }
 
+.event-date-group {
+    min-width: 0;
+    margin: 0 0 16px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+}
+.event-date-group legend { padding: 0 6px; color: var(--pink-dark); font-weight: 600; }
+.event-date-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 14px 4px 0;
+    font-weight: normal;
+}
+.event-date-option input { accent-color: var(--pink); }
+.event-date-option span { display: grid; gap: 2px; }
+.event-date-option small { color: var(--muted); font-size: 12px; font-weight: normal; }
+.event-date-group[hidden] { display: none; }
+
 /* ticket tier cards */
 .tiers { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
 .tier { flex: 1; min-width: 180px; margin: 0; cursor: pointer; }

@@ -25,12 +25,12 @@
 
         <div class="hero-highlights" role="group" aria-label="Upcoming event highlights">
             <p class="hero-highlights-title">Coming up in Bicol</p>
-            <?php foreach ($events as $event): ?>
+            <?php foreach ($events as $event_highlight): ?>
             <div class="hero-event">
                 <span class="hero-event-icon" aria-hidden="true">&#10022;</span>
                 <span>
-                    <strong><?= e($event['name']) ?></strong>
-                    <small><?= e($event['date']) ?></small>
+                    <strong><?= e($event_highlight['name']) ?></strong>
+                    <small><?= e($event_highlight['date']) ?></small>
                 </span>
             </div>
             <?php endforeach; ?>
@@ -45,8 +45,11 @@
         <div>
             <p class="code"><?= e($receipt['id']) ?></p>
             <h2><?= e($receipt['name']) ?></h2>
-            <p><?= e($events[$receipt['event']]['name']) ?></p>
-            <p><?= e($events[$receipt['event']]['date']) ?></p>
+            <p><?= e($receipt['event_name'] ?? ($events[$receipt['event']]['name'] ?? $receipt['event'])) ?></p>
+            <p><?= e($receipt['event_date'] ?? ($events[$receipt['event']]['date'] ?? '')) ?></p>
+            <?php if (!empty($receipt['event_guest'])): ?>
+            <p>Guest: <?= e($receipt['event_guest']) ?></p>
+            <?php endif; ?>
             <p><?= e(get_level($receipt['total'])) ?> attendee | <?= e(group_type($receipt['qty'])) ?></p>
         </div>
 
@@ -96,11 +99,30 @@
                     <option value="">Choose an event</option>
                     <?php foreach ($events as $key => $ev): ?>
                     <option value="<?= e($key) ?>" <?= (($_POST['event'] ?? '') === $key) ? 'selected' : '' ?>>
-                        <?= e($ev['name']) ?> (<?= e($ev['date']) ?>)
+                        <?= e($ev['name']) ?>
                     </option>
                     <?php endforeach; ?>
                 </select>
             </label>
+
+            <div class="event-date-groups">
+                <?php foreach ($events as $event_key => $event_info): ?>
+                <fieldset class="event-date-group" data-event-date-group="<?= e($event_key) ?>" <?php if ($event !== $event_key): ?>hidden<?php endif; ?>>
+                    <legend>Choose an event date</legend>
+                    <?php foreach ($event_info['schedule'] as $scheduled_day): ?>
+                    <label class="event-date-option">
+                        <input type="radio" name="event_date" value="<?= e($scheduled_day['date']) ?>" <?= $event === $event_key && $event_date === $scheduled_day['date'] ? 'checked' : '' ?>>
+                        <span>
+                            <?= e($scheduled_day['day']) ?> - <?= e($scheduled_day['date']) ?>
+                            <?php if (!empty($scheduled_day['guest'])): ?>
+                            <small>Guest: <?= e($scheduled_day['guest']) ?></small>
+                            <?php endif; ?>
+                        </span>
+                    </label>
+                    <?php endforeach; ?>
+                </fieldset>
+                <?php endforeach; ?>
+            </div>
 
             <!-- Ticket tiers (cheapest first) -->
             <p class="label">Ticket tier</p>
@@ -165,7 +187,9 @@
                 <div>
                     <b><?= $number + 1 ?>. <?= e($person['name']) ?></b><br>
                     <small>
-                        <?= e($events[$person['event']]['name']) ?> |
+                        <?= e($person['event_name'] ?? ($events[$person['event']]['name'] ?? $person['event'])) ?> |
+                        <?= e($person['event_date'] ?? ($events[$person['event']]['date'] ?? '')) ?>
+                        <?php if (!empty($person['event_guest'])): ?> | Guest: <?= e($person['event_guest']) ?><?php endif; ?> |
                         <?= e($tiers[$person['tier']]['label']) ?> x <?= $person['qty'] ?> |
                         <?= e($person['id']) ?>
                     </small><br>
@@ -181,5 +205,22 @@
     </section>
 
 </main>
+<script>
+const eventSelect = document.querySelector('select[name="event"]');
+const eventDateGroups = document.querySelectorAll('[data-event-date-group]');
+
+eventSelect.addEventListener('change', () => {
+    eventDateGroups.forEach((group) => {
+        const isSelectedEvent = group.dataset.eventDateGroup === eventSelect.value;
+        group.hidden = !isSelectedEvent;
+
+        if (!isSelectedEvent) {
+            group.querySelectorAll('input[name="event_date"]').forEach((radio) => {
+                radio.checked = false;
+            });
+        }
+    });
+});
+</script>
 </body>
 </html>
