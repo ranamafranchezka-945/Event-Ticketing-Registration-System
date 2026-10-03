@@ -147,13 +147,20 @@ input[type=text], select, input[type=file] {
 .badge-upload input[type=file]::file-selector-button {
     margin-right: 12px;
     padding: 8px 12px;
-    border: 0;
+    border: 1px solid transparent;
     border-radius: 8px;
     background: var(--soft);
     color: var(--pink-dark);
     font-weight: 600;
     cursor: pointer;
+    transition: all 0.2s ease-in-out;
 }
+.badge-upload input[type=file]::file-selector-button:hover {
+    border-color: var(--pink);
+    background: #f9b8d4;
+    transform: scale(1.03);
+}
+.badge-upload input[type=file]::file-selector-button:active { transform: scale(1); }
 input:focus, select:focus, button:focus { outline: 3px solid var(--line); border-color: var(--pink); }
 
 .event-date-group {
@@ -207,8 +214,17 @@ button {
     font-size: 17px;
     font-weight: bold;
     cursor: pointer;
+    transition: all 0.2s ease-in-out;
 }
-button:hover { background: linear-gradient(90deg, #ec4899, #be185d); }
+button:hover {
+    background: linear-gradient(90deg, #ec4899, #be185d);
+    box-shadow: 0 8px 18px rgba(190, 24, 93, 0.25);
+    transform: translateY(-2px);
+}
+button:active {
+    box-shadow: 0 3px 8px rgba(190, 24, 93, 0.2);
+    transform: translateY(0);
+}
 
 .errors {
     background: #ffe4ec;
