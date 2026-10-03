@@ -119,11 +119,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Tickets must be a number from 1 to 10.';
     }
 
-    // Terms
-    if ($agree !== 'yes') {
-        $errors[] = 'Please accept the terms.';
-    }
-
     // ---------- File upload checks ----------
     $badge_upload = $_FILES['badge_photo'] ?? null;
     $badge_temp_directory = 'uploads/temp_badges';
@@ -189,6 +184,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // Terms are last in the form, so report this validation last.
+    if ($agree !== 'yes') {
+        $errors[] = 'Please accept the terms.';
+    }
+
     // ---------- No errors: save everything ----------
     if (empty($errors)) {
 
@@ -249,14 +249,12 @@ $sort = $_GET['sort'] ?? 'desc';
 if ($sort !== 'asc' && $sort !== 'desc') {
     $sort = 'desc';
 }
-$people = sort_by_total($_SESSION['registrations'], $sort);
+$attendees = $_SESSION['registrations'];
+$people = sort_by_total($attendees, $sort);
 
-$total_people = count($_SESSION['registrations']);
-$total_money  = calculate_total($_SESSION['registrations']);
-
-$summary = '';
-$summary .= $total_people . ' registered';
-$summary .= ' | ' . peso($total_money) . ' collected';
+$attendee_count = count($attendees);
+$total_revenue = calculate_total($attendees);
+$summary = $attendee_count . ' Registered | PHP ' . number_format($total_revenue, 2) . ' collected';
 
 // asort: tiers ordered from cheapest to most expensive
 $prices = [];

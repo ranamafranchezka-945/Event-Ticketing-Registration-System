@@ -9,8 +9,8 @@
 <body>
 
 <header>
-    <h1>Gatepass</h1>
-    <p><?= e($summary) ?></p>
+    <h1>GATEPASS</h1>
+    <p class="header-counter"><?= e($summary) ?></p>
 </header>
 
 <main>
@@ -166,7 +166,7 @@
         <div class="attendees-heading">
             <h2 class="attendees-title">
                 Attendees
-                <span class="attendee-count"><?= $total_people ?></span>
+                <span class="attendee-count"><?= $attendee_count ?></span>
             </h2>
 
             <nav class="sort-controls" aria-label="Sort attendees">
@@ -197,7 +197,7 @@
 
                 <div class="money">
                     <b><?= e(peso($person['total'])) ?></b><br>
-                    <small><?= e(get_level($person['total'])) ?></small>
+                    <small class="attendee-status"><?= e(get_level($person['total'])) ?></small>
                 </div>
             </div>
             <?php endforeach; ?>
