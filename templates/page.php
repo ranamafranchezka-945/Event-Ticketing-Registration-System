@@ -29,24 +29,6 @@
         </div>
 
         <table>
-            <tr>
-                <td><?= e($tiers[$receipt['tier']]['label']) ?> x <?= $receipt['qty'] ?></td>
-                <td><?= e(peso($receipt['subtotal'])) ?></td>
-            </tr>
-            <?php if ($receipt['discount'] > 0): ?>
-            <tr>
-                <td>Discount (<?= round($receipt['discount_rate'] * 100) ?>%)</td>
-                <td>- <?= e(peso($receipt['discount'])) ?></td>
-            </tr>
-            <?php endif; ?>
-            <tr>
-                <td>Service fee</td>
-                <td><?= e(peso($receipt['fee'])) ?></td>
-            </tr>
-            <tr>
-                <td>VAT 12%</td>
-                <td><?= e(peso($receipt['tax'])) ?></td>
-            </tr>
             <tr class="grand">
                 <td>Total</td>
                 <td><?= e(peso($receipt['total'])) ?></td>
@@ -63,7 +45,7 @@
         <!-- Error messages -->
         <?php if (!empty($errors)): ?>
         <div class="errors">
-            <strong>Please fix these:</strong>
+            <strong>To proceed, please fill these out:</strong>
             <ul>
                 <?php foreach ($errors as $message): ?>
                 <li><?= e($message) ?></li>
@@ -114,10 +96,6 @@
 
             <label>Number of tickets
                 <input type="text" name="qty" value="<?= e($qty) ?>">
-            </label>
-
-            <label>Promo code (optional)
-                <input type="text" name="promo" value="<?= e($promo) ?>" placeholder="STUDENT">
             </label>
 
             <label>Badge photo (JPG, PNG or WebP, max 2 MB)

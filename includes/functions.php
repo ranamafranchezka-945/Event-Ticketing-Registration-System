@@ -21,39 +21,10 @@ function calculate_total(array $items): float
     return $sum;
 }
 
-// Function 4: the math (discount, service fee, tax)
-function calculate_order(float $price, int $qty, float $promo_rate): array
+// Function 4: calculate ticket price times quantity
+function calculate_ticket_total(float $price, int $qty): float
 {
-    $subtotal = $price * $qty;
-
-    // volume discount
-    if ($qty >= 5) {
-        $volume_rate = 0.10;
-    } elseif ($qty >= 3) {
-        $volume_rate = 0.05;
-    } else {
-        $volume_rate = 0;
-    }
-
-    $discount_rate = $volume_rate + $promo_rate;
-    if ($discount_rate > 0.25) {
-        $discount_rate = 0.25;   // never more than 25% off
-    }
-
-    $discount = $subtotal * $discount_rate;
-    $after_discount = $subtotal - $discount;
-    $fee = $after_discount * SERVICE_FEE;
-    $tax = ($after_discount + $fee) * VAT_RATE;
-    $total = $after_discount + $fee + $tax;
-
-    return [
-        'subtotal'      => $subtotal,
-        'discount_rate' => $discount_rate,
-        'discount'      => $discount,
-        'fee'           => $fee,
-        'tax'           => $tax,
-        'total'         => $total,
-    ];
+    return $price * $qty;
 }
 
 // Function 5: pass-by-reference (&). It changes the original list.
