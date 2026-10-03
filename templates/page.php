@@ -95,7 +95,7 @@
                 <select name="event">
                     <option value="">Choose an event</option>
                     <?php foreach ($events as $key => $ev): ?>
-                    <option value="<?= e($key) ?>" <?= $event === $key ? 'selected' : '' ?>>
+                    <option value="<?= e($key) ?>" <?= (($_POST['event'] ?? '') === $key) ? 'selected' : '' ?>>
                         <?= e($ev['name']) ?> (<?= e($ev['date']) ?>)
                     </option>
                     <?php endforeach; ?>
@@ -120,9 +120,14 @@
                 <input type="text" name="qty" value="<?= e($qty) ?>">
             </label>
 
-            <label class="badge-upload">Badge photo (JPG, PNG or WebP, max 2 MB)
-                <input type="file" name="badge_photo" accept=".jpg,.jpeg,.png,.webp">
-            </label>
+            <div class="badge-upload">
+                <label for="badge-photo">Badge photo (JPG, PNG or WebP, max 2 MB)</label>
+                <input id="badge-photo" type="file" name="badge_photo" accept=".jpg,.jpeg,.png,.webp">
+                <?php if (is_array($temp_badge) && isset($temp_badge['filename'], $temp_badge['original_name']) && basename($temp_badge['filename']) === $temp_badge['filename'] && is_file('uploads/temp_badges/' . $temp_badge['filename'])): ?>
+                <input type="hidden" name="temp_badge" value="<?= e($temp_badge['filename']) ?>">
+                <p class="badge-attached"><span aria-hidden="true">&#10003;</span> Photo already attached: <strong><?= e($temp_badge['original_name']) ?></strong></p>
+                <?php endif; ?>
+            </div>
 
             <label class="agree">
                 <input type="checkbox" name="agree" value="yes" <?= $agree === 'yes' ? 'checked' : '' ?>>

@@ -125,10 +125,12 @@ input[type=text], select, input[type=file] {
 }
 .badge-upload {
     padding: 16px;
+    margin-bottom: 14px;
     border: 2px dashed var(--pink);
     border-radius: 14px;
     background: #fff8fb;
 }
+.badge-upload > label { margin: 0; }
 .badge-upload input[type=file] {
     margin-top: 10px;
     padding: 10px;
@@ -136,6 +138,11 @@ input[type=text], select, input[type=file] {
     border-radius: 8px;
     background: #fff;
     cursor: pointer;
+}
+.badge-attached {
+    margin: 10px 0 0;
+    color: var(--pink-dark);
+    font-size: 14px;
 }
 .badge-upload input[type=file]::file-selector-button {
     margin-right: 12px;

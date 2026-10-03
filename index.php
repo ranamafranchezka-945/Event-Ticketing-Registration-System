@@ -42,6 +42,7 @@ $event     = $_POST['event'] ?? '';
 $tier      = $_POST['tier'] ?? '';
 $qty       = $_POST['qty'] ?? '1';
 $agree     = $_POST['agree'] ?? '';
+$temp_badge = $_SESSION['temp_badge'] ?? null;
 
 $errors = [];
 
@@ -93,33 +94,89 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // ---------- File upload checks ----------
-    $new_file_name = '';
-    $extension = '';
+    $badge_upload = $_FILES['badge_photo'] ?? null;
+    $badge_temp_directory = 'uploads/temp_badges';
+    $badge_extension = '';
+    $badge_source = '';
+    $badge_is_new_upload = false;
+    $posted_temp_badge = $_POST['temp_badge'] ?? '';
 
-    if (empty($_FILES['badge_photo']['name'])) {
-        $errors[] = 'Please upload a badge photo.';
-    } elseif ($_FILES['badge_photo']['error'] === UPLOAD_ERR_OK) {
-        if ($_FILES['badge_photo']['size'] > 2 * 1024 * 1024) {
+    if ($badge_upload !== null && !empty($badge_upload['name'])) {
+        if ($badge_upload['error'] !== UPLOAD_ERR_OK) {
+            $errors[] = 'The upload failed. Try a smaller photo.';
+        } elseif ($badge_upload['size'] > 2 * 1024 * 1024) {
             $errors[] = 'Photo is too big. Maximum is 2 MB.';
         } else {
-            $extension = strtolower(pathinfo($_FILES['badge_photo']['name'], PATHINFO_EXTENSION));
+            $badge_extension = strtolower(pathinfo($badge_upload['name'], PATHINFO_EXTENSION));
 
-            if (!in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true)) {
+            if (!in_array($badge_extension, ['jpg', 'jpeg', 'png', 'webp'], true)) {
                 $errors[] = 'Photo must be a JPG, PNG or WebP image.';
+            } else {
+                $badge_source = $badge_upload['tmp_name'];
+                $badge_is_new_upload = true;
             }
         }
+    } elseif (
+        is_array($temp_badge)
+        && isset($temp_badge['filename'], $temp_badge['original_name'], $temp_badge['extension'])
+        && $posted_temp_badge === $temp_badge['filename']
+        && basename($temp_badge['filename']) === $temp_badge['filename']
+        && in_array($temp_badge['extension'], ['jpg', 'jpeg', 'png', 'webp'], true)
+        && is_file($badge_temp_directory . '/' . $temp_badge['filename'])
+    ) {
+        $badge_extension = $temp_badge['extension'];
+        $badge_source = $badge_temp_directory . '/' . $temp_badge['filename'];
     } else {
-        $errors[] = 'The upload failed. Try a smaller photo.';
+        $errors[] = 'Please upload a badge photo.';
+    }
+
+    if ($badge_is_new_upload && !empty($errors)) {
+        if (!is_dir($badge_temp_directory) && !mkdir($badge_temp_directory, 0700, true) && !is_dir($badge_temp_directory)) {
+            $errors[] = 'The badge photo could not be saved temporarily. Please try again.';
+        } else {
+            $temporary_filename = uniqid('badge_') . '.' . $badge_extension;
+            $temporary_path = $badge_temp_directory . '/' . $temporary_filename;
+
+            if (move_uploaded_file($badge_upload['tmp_name'], $temporary_path)) {
+                if (is_array($temp_badge) && isset($temp_badge['filename'])) {
+                    $old_temporary_path = $badge_temp_directory . '/' . basename($temp_badge['filename']);
+                    if (is_file($old_temporary_path)) {
+                        unlink($old_temporary_path);
+                    }
+                }
+
+                $temp_badge = [
+                    'filename' => $temporary_filename,
+                    'original_name' => basename($badge_upload['name']),
+                    'extension' => $badge_extension,
+                ];
+                $_SESSION['temp_badge'] = $temp_badge;
+                $badge_source = $temporary_path;
+            } else {
+                $errors[] = 'The badge photo could not be saved temporarily. Please try again.';
+            }
+        }
     }
 
     // ---------- No errors: save everything ----------
     if (empty($errors)) {
 
-        // give the file a safe unique name, then move it to uploads/
-        $new_file_name = uniqid('badge_') . '.' . $extension;
+        // Give the file a safe unique name, then move it to uploads/.
+        $new_file_name = uniqid('badge_') . '.' . $badge_extension;
         $destination = 'uploads/' . $new_file_name;
+        $photo_saved = $badge_is_new_upload
+            ? move_uploaded_file($badge_source, $destination)
+            : rename($badge_source, $destination);
 
-        if (move_uploaded_file($_FILES['badge_photo']['tmp_name'], $destination)) {
+        if ($photo_saved) {
+            if (is_array($temp_badge) && isset($temp_badge['filename'])) {
+                $old_temporary_path = $badge_temp_directory . '/' . basename($temp_badge['filename']);
+                if (is_file($old_temporary_path)) {
+                    unlink($old_temporary_path);
+                }
+            }
+            unset($_SESSION['temp_badge']);
+
             // build the record and save it
             $record = [
                 'id'        => next_ticket_id(count($_SESSION['registrations'])),
