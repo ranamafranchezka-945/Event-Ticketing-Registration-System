@@ -25,6 +25,15 @@ if (!isset($_SESSION['registrations'])) {
     $_SESSION['registrations'] = [];
 }
 
+foreach ($_SESSION['registrations'] as &$registration) {
+    $registration['total'] = calculate_ticket_total(
+        (float) $tiers[$registration['tier']]['price'],
+        (int) $registration['qty']
+    );
+    unset($registration['subtotal'], $registration['discount_rate'], $registration['discount'], $registration['fee'], $registration['tax']);
+}
+unset($registration);
+
 // Sticky form values (?? gives an empty default when nothing was sent)
 $name      = $_POST['name'] ?? '';
 $email     = $_POST['email'] ?? '';
@@ -32,7 +41,6 @@ $age       = $_POST['age'] ?? '';
 $event     = $_POST['event'] ?? '';
 $tier      = $_POST['tier'] ?? '';
 $qty       = $_POST['qty'] ?? '1';
-$promo     = $_POST['promo'] ?? '';
 $agree     = $_POST['agree'] ?? '';
 
 $errors = [];
@@ -44,7 +52,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($email);
     $age   = trim($age);
     $qty   = trim($qty);
-    $promo = strtoupper(trim($promo));
 
     // Name
     if (empty($name)) {
@@ -78,11 +85,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Quantity
     if (!filter_var($qty, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 10]])) {
         $errors[] = 'Tickets must be a number from 1 to 10.';
-    }
-
-    // Promo code (optional)
-    if (!empty($promo) && !array_key_exists($promo, $promo_codes)) {
-        $errors[] = 'That promo code does not exist.';
     }
 
     // Terms
@@ -119,10 +121,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $new_file_name = uniqid('badge_') . '.' . $extension;
         move_uploaded_file($file['tmp_name'], 'uploads/' . $new_file_name);
 
-        // do the math
-        $promo_rate = $promo_codes[$promo] ?? 0;
-        $order = calculate_order($tiers[$tier]['price'], (int) $qty, $promo_rate);
-
         // build the record and save it
         $record = [
             'id'        => next_ticket_id(count($_SESSION['registrations'])),
@@ -133,12 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'tier'      => $tier,
             'qty'       => (int) $qty,
             'photo'     => $new_file_name,
-            'subtotal'  => $order['subtotal'],
-            'discount_rate' => $order['discount_rate'],
-            'discount'  => $order['discount'],
-            'fee'       => $order['fee'],
-            'tax'       => $order['tax'],
-            'total'     => $order['total'],
+            'total'     => calculate_ticket_total((float) $tiers[$tier]['price'], (int) $qty),
         ];
         add_registration($_SESSION['registrations'], $record);
         $_SESSION['receipt'] = $record;
@@ -151,6 +144,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // ---------- Prepare data for the page ----------
 $receipt = $_SESSION['receipt'] ?? null;
+if ($receipt !== null) {
+    $receipt['total'] = calculate_ticket_total(
+        (float) $tiers[$receipt['tier']]['price'],
+        (int) $receipt['qty']
+    );
+}
 unset($_SESSION['receipt']);   // show the receipt only once
 
 $sort = $_GET['sort'] ?? 'desc';

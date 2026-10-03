@@ -18,10 +18,9 @@ Needs PHP 8+ (the `match` expression). The uploads/ folder must be writable.
 | count, asort | index.php |
 | foreach + endforeach / endif | templates/page.php |
 | if-elseif-else / match | get_level(), group_type() |
-| Math | calculate_order() |
+| Math | calculate_ticket_total() |
 | ?? , <=> , .= , === | index.php ??, sort_by_total() <=>, $summary .=, === in several places |
 
 ## Live challenge quick edits
 - Name length: MIN_NAME_LENGTH in includes/data.php
 - Sort order: change 'desc' in `$_GET['sort'] ?? 'desc'` in index.php
-- VAT / fee: VAT_RATE / SERVICE_FEE in includes/data.php
