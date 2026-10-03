@@ -1,7 +1,6 @@
 <?php
 // ---------- SETTINGS (easy to change) ----------
 const MIN_NAME_LENGTH = 4;                // change 4 to 8 for the live challenge
-const MAX_FILE_SIZE   = 10 * 1024 * 1024;  // 10 MB
 
 // ---------- DATA (multidimensional associative arrays) ----------
 $events = [
@@ -14,11 +13,4 @@ $tiers = [
     'general'   => ['label' => 'General',   'price' => 1500, 'perks' => 'Standing area, wristband'],
     'vip'       => ['label' => 'VIP',       'price' => 4500, 'perks' => 'Reserved seat, free drink'],
     'backstage' => ['label' => 'Backstage', 'price' => 9000, 'perks' => 'Meet the speakers, front row'],
-];
-
-// allowed image types and the file extension we save them with
-$allowed_types = [
-    'image/jpeg' => 'jpg',
-    'image/png'  => 'png',
-    'image/webp' => 'webp',
 ];

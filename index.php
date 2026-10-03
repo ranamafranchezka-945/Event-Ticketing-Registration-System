@@ -93,52 +93,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // ---------- File upload checks ----------
-    $file = $_FILES['photo'] ?? null;
     $new_file_name = '';
-    $mime = '';
+    $extension = '';
 
-    if ($file === null || $file['error'] === UPLOAD_ERR_NO_FILE) {
+    if (empty($_FILES['badge_photo']['name'])) {
         $errors[] = 'Please upload a badge photo.';
-    } elseif ($file['error'] !== UPLOAD_ERR_OK) {
-        $errors[] = 'The upload failed. Try a smaller photo.';
-    } elseif ($file['size'] > MAX_FILE_SIZE) {
-        $errors[] = 'Photo is too big. Maximum is 2 MB.';
-    } else {
-        // getimagesize() reads the real image type (false if it is not an image)
-        $image_info = @getimagesize($file['tmp_name']);
-        $mime = $image_info['mime'] ?? '';
+    } elseif ($_FILES['badge_photo']['error'] === UPLOAD_ERR_OK) {
+        if ($_FILES['badge_photo']['size'] > 2 * 1024 * 1024) {
+            $errors[] = 'Photo is too big. Maximum is 2 MB.';
+        } else {
+            $extension = strtolower(pathinfo($_FILES['badge_photo']['name'], PATHINFO_EXTENSION));
 
-        if (!array_key_exists($mime, $allowed_types)) {
-            $errors[] = 'Photo must be a JPG, PNG or WebP image.';
+            if (!in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true)) {
+                $errors[] = 'Photo must be a JPG, PNG or WebP image.';
+            }
         }
+    } else {
+        $errors[] = 'The upload failed. Try a smaller photo.';
     }
 
     // ---------- No errors: save everything ----------
     if (empty($errors)) {
 
         // give the file a safe unique name, then move it to uploads/
-        $extension = $allowed_types[$mime];
         $new_file_name = uniqid('badge_') . '.' . $extension;
-        move_uploaded_file($file['tmp_name'], 'uploads/' . $new_file_name);
+        $destination = 'uploads/' . $new_file_name;
 
-        // build the record and save it
-        $record = [
-            'id'        => next_ticket_id(count($_SESSION['registrations'])),
-            'name'      => $name,
-            'email'     => $email,
-            'age'       => (int) $age,
-            'event'     => $event,
-            'tier'      => $tier,
-            'qty'       => (int) $qty,
-            'photo'     => $new_file_name,
-            'total'     => calculate_ticket_total((float) $tiers[$tier]['price'], (int) $qty),
-        ];
-        add_registration($_SESSION['registrations'], $record);
-        $_SESSION['receipt'] = $record;
+        if (move_uploaded_file($_FILES['badge_photo']['tmp_name'], $destination)) {
+            // build the record and save it
+            $record = [
+                'id'        => next_ticket_id(count($_SESSION['registrations'])),
+                'name'      => $name,
+                'email'     => $email,
+                'age'       => (int) $age,
+                'event'     => $event,
+                'tier'      => $tier,
+                'qty'       => (int) $qty,
+                'photo'     => $new_file_name,
+                'total'     => calculate_ticket_total((float) $tiers[$tier]['price'], (int) $qty),
+            ];
+            add_registration($_SESSION['registrations'], $record);
+            $_SESSION['receipt'] = $record;
 
-        // Post/Redirect/Get: stops the form being sent twice on refresh
-        header('Location: index.php');
-        exit;
+            // Post/Redirect/Get: stops the form being sent twice on refresh
+            header('Location: index.php');
+            exit;
+        }
+
+        $errors[] = 'The badge photo could not be saved. Please try again.';
     }
 }
 

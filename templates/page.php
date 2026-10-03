@@ -98,8 +98,8 @@
                 <input type="text" name="qty" value="<?= e($qty) ?>">
             </label>
 
-            <label>Badge photo (JPG, PNG or WebP, max 2 MB)
-                <input type="file" name="photo">
+            <label class="badge-upload">Badge photo (JPG, PNG or WebP, max 2 MB)
+                <input type="file" name="badge_photo" accept=".jpg,.jpeg,.png,.webp">
             </label>
 
             <label class="agree">
