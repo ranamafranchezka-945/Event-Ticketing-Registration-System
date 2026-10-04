@@ -237,6 +237,8 @@
 <script>
 const eventSelect = document.querySelector('select[name="event"]');
 const eventDateGroups = document.querySelectorAll('[data-event-date-group]');
+const sortControls = document.querySelector('.sort-controls');
+const attendeeTableBody = document.querySelector('.attendee-table tbody');
 
 eventSelect.addEventListener('change', () => {
     eventDateGroups.forEach((group) => {
@@ -249,6 +251,51 @@ eventSelect.addEventListener('change', () => {
             });
         }
     });
+});
+
+sortControls.addEventListener('click', async (event) => {
+    const link = event.target.closest('a[href]');
+    if (!link || !sortControls.contains(link)) {
+        return;
+    }
+
+    event.preventDefault();
+
+    try {
+        const response = await fetch(link.href);
+        if (!response.ok) {
+            throw new Error('Could not sort attendees.');
+        }
+
+        const responseDocument = new DOMParser().parseFromString(await response.text(), 'text/html');
+        const updatedTableBody = responseDocument.querySelector('.attendee-table tbody');
+        if (attendeeTableBody && updatedTableBody) {
+            attendeeTableBody.replaceChildren(
+                ...Array.from(updatedTableBody.childNodes, (node) => document.importNode(node, true))
+            );
+        } else if (attendeeTableBody || updatedTableBody) {
+            throw new Error('The attendee table response was incomplete.');
+        }
+
+        const selectedSort = new URL(link.href).searchParams.get('sort');
+        sortControls.querySelectorAll('a[href]').forEach((sortLink) => {
+            const sort = new URL(sortLink.href).searchParams.get('sort');
+            const responseLink = Array.from(responseDocument.querySelectorAll('.sort-controls a[href]'))
+                .find((candidate) => new URL(candidate.href).searchParams.get('sort') === sort);
+
+            if (sort === selectedSort && responseLink) {
+                sortLink.className = responseLink.className;
+                sortLink.setAttribute('aria-current', 'true');
+            } else {
+                sortLink.removeAttribute('aria-current');
+                if (responseLink) {
+                    sortLink.className = responseLink.className;
+                }
+            }
+        });
+    } catch (error) {
+        window.location.assign(link.href);
+    }
 });
 </script>
 </body>
