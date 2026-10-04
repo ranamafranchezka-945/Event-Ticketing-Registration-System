@@ -9,11 +9,33 @@
 <body>
 
 <header>
-    <h1>Gatepass</h1>
-    <p><?= e($summary) ?></p>
+    <h1>GATEPASS</h1>
+    <p class="header-counter"><?= e($summary) ?></p>
 </header>
 
 <main>
+
+    <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+            <p class="hero-eyebrow">GATEPASS / BICOL EVENTS</p>
+            <h2 id="hero-title">Make room for a night worth remembering.</h2>
+            <p>Find your people, discover something new, and get your next great night out on the calendar.</p>
+            <a class="hero-cta" href="#register">Register Now</a>
+        </div>
+
+        <div class="hero-highlights" role="group" aria-label="Upcoming event highlights">
+            <p class="hero-highlights-title">Coming up in Bicol</p>
+            <?php foreach ($events as $event_highlight): ?>
+            <div class="hero-event">
+                <span class="hero-event-icon" aria-hidden="true">&#10022;</span>
+                <span>
+                    <strong><?= e($event_highlight['name']) ?></strong>
+                    <small><?= e($event_highlight['date']) ?></small>
+                </span>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </section>
 
     <!-- RECEIPT: shows once after a successful registration -->
     <?php if ($receipt !== null): ?>
@@ -23,8 +45,11 @@
         <div>
             <p class="code"><?= e($receipt['id']) ?></p>
             <h2><?= e($receipt['name']) ?></h2>
-            <p><?= e($events[$receipt['event']]['name']) ?></p>
-            <p><?= e($events[$receipt['event']]['date']) ?></p>
+            <p><?= e($receipt['event_name'] ?? ($events[$receipt['event']]['name'] ?? $receipt['event'])) ?></p>
+            <p><?= e($receipt['event_date'] ?? ($events[$receipt['event']]['date'] ?? '')) ?></p>
+            <?php if (!empty($receipt['event_guest'])): ?>
+            <p>Guest: <?= e($receipt['event_guest']) ?></p>
+            <?php endif; ?>
             <p><?= e(get_level($receipt['total'])) ?> attendee | <?= e(group_type($receipt['qty'])) ?></p>
         </div>
 
@@ -39,7 +64,7 @@
 
 
     <!-- REGISTRATION FORM -->
-    <section class="box">
+    <section class="box" id="register">
         <h2>Register</h2>
 
         <!-- Error messages -->
@@ -73,12 +98,31 @@
                 <select name="event">
                     <option value="">Choose an event</option>
                     <?php foreach ($events as $key => $ev): ?>
-                    <option value="<?= e($key) ?>" <?= $event === $key ? 'selected' : '' ?>>
-                        <?= e($ev['name']) ?> (<?= e($ev['date']) ?>)
+                    <option value="<?= e($key) ?>" <?= (($_POST['event'] ?? '') === $key) ? 'selected' : '' ?>>
+                        <?= e($ev['name']) ?>
                     </option>
                     <?php endforeach; ?>
                 </select>
             </label>
+
+            <div class="event-date-groups">
+                <?php foreach ($events as $event_key => $event_info): ?>
+                <fieldset class="event-date-group" data-event-date-group="<?= e($event_key) ?>" <?php if ($event !== $event_key): ?>hidden<?php endif; ?>>
+                    <legend>Choose an event date</legend>
+                    <?php foreach ($event_info['schedule'] as $scheduled_day): ?>
+                    <label class="event-date-option">
+                        <input type="radio" name="event_date" value="<?= e($scheduled_day['date']) ?>" <?= $event === $event_key && $event_date === $scheduled_day['date'] ? 'checked' : '' ?>>
+                        <span>
+                            <?= e($scheduled_day['day']) ?> - <?= e($scheduled_day['date']) ?>
+                            <?php if (!empty($scheduled_day['guest'])): ?>
+                            <small>Guest: <?= e($scheduled_day['guest']) ?></small>
+                            <?php endif; ?>
+                        </span>
+                    </label>
+                    <?php endforeach; ?>
+                </fieldset>
+                <?php endforeach; ?>
+            </div>
 
             <!-- Ticket tiers (cheapest first) -->
             <p class="label">Ticket tier</p>
@@ -98,9 +142,14 @@
                 <input type="text" name="qty" value="<?= e($qty) ?>">
             </label>
 
-            <label>Badge photo (JPG, PNG or WebP, max 2 MB)
-                <input type="file" name="photo">
-            </label>
+            <div class="badge-upload">
+                <label for="badge-photo">Badge photo (JPG, PNG or WebP, max 2 MB)</label>
+                <input id="badge-photo" type="file" name="badge_photo" accept=".jpg,.jpeg,.png,.webp">
+                <?php if (is_array($temp_badge) && isset($temp_badge['filename'], $temp_badge['original_name']) && basename($temp_badge['filename']) === $temp_badge['filename'] && is_file('uploads/temp_badges/' . $temp_badge['filename'])): ?>
+                <input type="hidden" name="temp_badge" value="<?= e($temp_badge['filename']) ?>">
+                <p class="badge-attached"><span aria-hidden="true">&#10003;</span> Photo already attached: <strong><?= e($temp_badge['original_name']) ?></strong></p>
+                <?php endif; ?>
+            </div>
 
             <label class="agree">
                 <input type="checkbox" name="agree" value="yes" <?= $agree === 'yes' ? 'checked' : '' ?>>
@@ -117,7 +166,7 @@
         <div class="attendees-heading">
             <h2 class="attendees-title">
                 Attendees
-                <span class="attendee-count"><?= $total_people ?></span>
+                <span class="attendee-count"><?= $attendee_count ?></span>
             </h2>
 
             <nav class="sort-controls" aria-label="Sort attendees">
@@ -138,7 +187,9 @@
                 <div>
                     <b><?= $number + 1 ?>. <?= e($person['name']) ?></b><br>
                     <small>
-                        <?= e($events[$person['event']]['name']) ?> |
+                        <?= e($person['event_name'] ?? ($events[$person['event']]['name'] ?? $person['event'])) ?> |
+                        <?= e($person['event_date'] ?? ($events[$person['event']]['date'] ?? '')) ?>
+                        <?php if (!empty($person['event_guest'])): ?> | Guest: <?= e($person['event_guest']) ?><?php endif; ?> |
                         <?= e($tiers[$person['tier']]['label']) ?> x <?= $person['qty'] ?> |
                         <?= e($person['id']) ?>
                     </small><br>
@@ -146,7 +197,7 @@
 
                 <div class="money">
                     <b><?= e(peso($person['total'])) ?></b><br>
-                    <small><?= e(get_level($person['total'])) ?></small>
+                    <small class="attendee-status"><?= e(get_level($person['total'])) ?></small>
                 </div>
             </div>
             <?php endforeach; ?>
@@ -154,5 +205,22 @@
     </section>
 
 </main>
+<script>
+const eventSelect = document.querySelector('select[name="event"]');
+const eventDateGroups = document.querySelectorAll('[data-event-date-group]');
+
+eventSelect.addEventListener('change', () => {
+    eventDateGroups.forEach((group) => {
+        const isSelectedEvent = group.dataset.eventDateGroup === eventSelect.value;
+        group.hidden = !isSelectedEvent;
+
+        if (!isSelectedEvent) {
+            group.querySelectorAll('input[name="event_date"]').forEach((radio) => {
+                radio.checked = false;
+            });
+        }
+    });
+});
+</script>
 </body>
 </html>

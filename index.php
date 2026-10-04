@@ -25,7 +25,20 @@ if (!isset($_SESSION['registrations'])) {
     $_SESSION['registrations'] = [];
 }
 
+$legacy_event_details = [
+    'techfest' => ['name' => 'Bicol TechFest', 'date' => 'Nov 14, 2026'],
+    'sound'    => ['name' => 'Kabsat Sound Fest', 'date' => 'Dec 05, 2026'],
+    'artwalk'  => ['name' => 'Art and Food Walk', 'date' => 'Dec 19, 2026'],
+];
+
 foreach ($_SESSION['registrations'] as &$registration) {
+    if (!isset($registration['event_name']) && isset($legacy_event_details[$registration['event']])) {
+        $registration['event_name'] = $legacy_event_details[$registration['event']]['name'];
+    }
+    if (!isset($registration['event_date']) && isset($legacy_event_details[$registration['event']])) {
+        $registration['event_date'] = $legacy_event_details[$registration['event']]['date'];
+    }
+
     $registration['total'] = calculate_ticket_total(
         (float) $tiers[$registration['tier']]['price'],
         (int) $registration['qty']
@@ -42,6 +55,9 @@ $event     = $_POST['event'] ?? '';
 $tier      = $_POST['tier'] ?? '';
 $qty       = $_POST['qty'] ?? '1';
 $agree     = $_POST['agree'] ?? '';
+$event_date = $_POST['event_date'] ?? '';
+$temp_badge = $_SESSION['temp_badge'] ?? null;
+$selected_schedule = null;
 
 $errors = [];
 
@@ -78,6 +94,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!array_key_exists($event, $events)) {
         $errors[] = 'Please choose an event.';
     }
+    if (empty($_POST['event_date'])) {
+        $errors[] = 'Please choose an event date.';
+    } elseif (array_key_exists($event, $events)) {
+        foreach ($events[$event]['schedule'] as $scheduled_day) {
+            if ($event_date === $scheduled_day['date']) {
+                $selected_schedule = $scheduled_day;
+                break;
+            }
+        }
+
+        if ($selected_schedule === null) {
+            $errors[] = 'Please choose a valid date for the selected event.';
+        }
+    } else {
+        $errors[] = 'Please choose a valid date for the selected event.';
+    }
     if (!array_key_exists($tier, $tiers)) {
         $errors[] = 'Please choose a ticket tier.';
     }
@@ -87,58 +119,119 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Tickets must be a number from 1 to 10.';
     }
 
-    // Terms
-    if ($agree !== 'yes') {
-        $errors[] = 'Please accept the terms.';
+    // ---------- File upload checks ----------
+    $badge_upload = $_FILES['badge_photo'] ?? null;
+    $badge_temp_directory = 'uploads/temp_badges';
+    $badge_extension = '';
+    $badge_source = '';
+    $badge_is_new_upload = false;
+    $posted_temp_badge = $_POST['temp_badge'] ?? '';
+
+    if ($badge_upload !== null && !empty($badge_upload['name'])) {
+        if ($badge_upload['error'] !== UPLOAD_ERR_OK) {
+            $errors[] = 'The upload failed. Try a smaller photo.';
+        } elseif ($badge_upload['size'] > 2 * 1024 * 1024) {
+            $errors[] = 'Photo is too big. Maximum is 2 MB.';
+        } else {
+            $badge_extension = strtolower(pathinfo($badge_upload['name'], PATHINFO_EXTENSION));
+
+            if (!in_array($badge_extension, ['jpg', 'jpeg', 'png', 'webp'], true)) {
+                $errors[] = 'Photo must be a JPG, PNG or WebP image.';
+            } else {
+                $badge_source = $badge_upload['tmp_name'];
+                $badge_is_new_upload = true;
+            }
+        }
+    } elseif (
+        is_array($temp_badge)
+        && isset($temp_badge['filename'], $temp_badge['original_name'], $temp_badge['extension'])
+        && $posted_temp_badge === $temp_badge['filename']
+        && basename($temp_badge['filename']) === $temp_badge['filename']
+        && in_array($temp_badge['extension'], ['jpg', 'jpeg', 'png', 'webp'], true)
+        && is_file($badge_temp_directory . '/' . $temp_badge['filename'])
+    ) {
+        $badge_extension = $temp_badge['extension'];
+        $badge_source = $badge_temp_directory . '/' . $temp_badge['filename'];
+    } else {
+        $errors[] = 'Please upload a badge photo.';
     }
 
-    // ---------- File upload checks ----------
-    $file = $_FILES['photo'] ?? null;
-    $new_file_name = '';
-    $mime = '';
+    if ($badge_is_new_upload && !empty($errors)) {
+        if (!is_dir($badge_temp_directory) && !mkdir($badge_temp_directory, 0700, true) && !is_dir($badge_temp_directory)) {
+            $errors[] = 'The badge photo could not be saved temporarily. Please try again.';
+        } else {
+            $temporary_filename = uniqid('badge_') . '.' . $badge_extension;
+            $temporary_path = $badge_temp_directory . '/' . $temporary_filename;
 
-    if ($file === null || $file['error'] === UPLOAD_ERR_NO_FILE) {
-        $errors[] = 'Please upload a badge photo.';
-    } elseif ($file['error'] !== UPLOAD_ERR_OK) {
-        $errors[] = 'The upload failed. Try a smaller photo.';
-    } elseif ($file['size'] > MAX_FILE_SIZE) {
-        $errors[] = 'Photo is too big. Maximum is 2 MB.';
-    } else {
-        // getimagesize() reads the real image type (false if it is not an image)
-        $image_info = @getimagesize($file['tmp_name']);
-        $mime = $image_info['mime'] ?? '';
+            if (move_uploaded_file($badge_upload['tmp_name'], $temporary_path)) {
+                if (is_array($temp_badge) && isset($temp_badge['filename'])) {
+                    $old_temporary_path = $badge_temp_directory . '/' . basename($temp_badge['filename']);
+                    if (is_file($old_temporary_path)) {
+                        unlink($old_temporary_path);
+                    }
+                }
 
-        if (!array_key_exists($mime, $allowed_types)) {
-            $errors[] = 'Photo must be a JPG, PNG or WebP image.';
+                $temp_badge = [
+                    'filename' => $temporary_filename,
+                    'original_name' => basename($badge_upload['name']),
+                    'extension' => $badge_extension,
+                ];
+                $_SESSION['temp_badge'] = $temp_badge;
+                $badge_source = $temporary_path;
+            } else {
+                $errors[] = 'The badge photo could not be saved temporarily. Please try again.';
+            }
         }
+    }
+
+    // Terms are last in the form, so report this validation last.
+    if ($agree !== 'yes') {
+        $errors[] = 'Please accept the terms.';
     }
 
     // ---------- No errors: save everything ----------
     if (empty($errors)) {
 
-        // give the file a safe unique name, then move it to uploads/
-        $extension = $allowed_types[$mime];
-        $new_file_name = uniqid('badge_') . '.' . $extension;
-        move_uploaded_file($file['tmp_name'], 'uploads/' . $new_file_name);
+        // Give the file a safe unique name, then move it to uploads/.
+        $new_file_name = uniqid('badge_') . '.' . $badge_extension;
+        $destination = 'uploads/' . $new_file_name;
+        $photo_saved = $badge_is_new_upload
+            ? move_uploaded_file($badge_source, $destination)
+            : rename($badge_source, $destination);
 
-        // build the record and save it
-        $record = [
-            'id'        => next_ticket_id(count($_SESSION['registrations'])),
-            'name'      => $name,
-            'email'     => $email,
-            'age'       => (int) $age,
-            'event'     => $event,
-            'tier'      => $tier,
-            'qty'       => (int) $qty,
-            'photo'     => $new_file_name,
-            'total'     => calculate_ticket_total((float) $tiers[$tier]['price'], (int) $qty),
-        ];
-        add_registration($_SESSION['registrations'], $record);
-        $_SESSION['receipt'] = $record;
+        if ($photo_saved) {
+            if (is_array($temp_badge) && isset($temp_badge['filename'])) {
+                $old_temporary_path = $badge_temp_directory . '/' . basename($temp_badge['filename']);
+                if (is_file($old_temporary_path)) {
+                    unlink($old_temporary_path);
+                }
+            }
+            unset($_SESSION['temp_badge']);
 
-        // Post/Redirect/Get: stops the form being sent twice on refresh
-        header('Location: index.php');
-        exit;
+            // build the record and save it
+            $record = [
+                'id'        => next_ticket_id(count($_SESSION['registrations'])),
+                'name'      => $name,
+                'email'     => $email,
+                'age'       => (int) $age,
+                'event'     => $event,
+                'event_name' => $events[$event]['name'],
+                'event_date' => $event_date,
+                'event_guest' => $selected_schedule['guest'],
+                'tier'      => $tier,
+                'qty'       => (int) $qty,
+                'photo'     => $new_file_name,
+                'total'     => calculate_ticket_total((float) $tiers[$tier]['price'], (int) $qty),
+            ];
+            add_registration($_SESSION['registrations'], $record);
+            $_SESSION['receipt'] = $record;
+
+            // Post/Redirect/Get: stops the form being sent twice on refresh
+            header('Location: index.php');
+            exit;
+        }
+
+        $errors[] = 'The badge photo could not be saved. Please try again.';
     }
 }
 
@@ -156,14 +249,12 @@ $sort = $_GET['sort'] ?? 'desc';
 if ($sort !== 'asc' && $sort !== 'desc') {
     $sort = 'desc';
 }
-$people = sort_by_total($_SESSION['registrations'], $sort);
+$attendees = $_SESSION['registrations'];
+$people = sort_by_total($attendees, $sort);
 
-$total_people = count($_SESSION['registrations']);
-$total_money  = calculate_total($_SESSION['registrations']);
-
-$summary = '';
-$summary .= $total_people . ' registered';
-$summary .= ' | ' . peso($total_money) . ' collected';
+$attendee_count = count($attendees);
+$total_revenue = calculate_total($attendees);
+$summary = $attendee_count . ' Registered | PHP ' . number_format($total_revenue, 2) . ' collected';
 
 // asort: tiers ordered from cheapest to most expensive
 $prices = [];
