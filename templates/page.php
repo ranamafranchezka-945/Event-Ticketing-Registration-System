@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Gatepass - Event Ticketing</title>
+    <title>GATEPASS - Event Ticketing</title>
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
