@@ -90,6 +90,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Age must be a number from 13 to 120.';
     }
 
+    // Quantity
+    if (!filter_var($qty, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 10]])) {
+        $errors[] = 'Tickets must be a number from 1 to 10.';
+    }
+
     // Event and tier must be one of our choices
     if (!array_key_exists($event, $events)) {
         $errors[] = 'Please choose an event.';
@@ -112,11 +117,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if (!array_key_exists($tier, $tiers)) {
         $errors[] = 'Please choose a ticket tier.';
-    }
-
-    // Quantity
-    if (!filter_var($qty, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 10]])) {
-        $errors[] = 'Tickets must be a number from 1 to 10.';
     }
 
     // ---------- File upload checks ----------

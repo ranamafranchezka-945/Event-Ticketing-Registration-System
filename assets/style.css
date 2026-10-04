@@ -398,3 +398,97 @@ button:active {
 }
 small { color: var(--muted); }
 .tag { background: var(--soft); color: var(--pink-dark); border-radius: 20px; padding: 2px 10px; font-size: 12px; margin-right: 4px; }
+/* =========================================================
+   UI/UX refinements
+   ========================================================= */
+
+/* Header: one clean line, logo and stat badge vertically centred */
+header { padding: 24px 20px 12px; gap: 12px 16px; }
+header p.header-counter { padding: 10px 18px; white-space: nowrap; }
+@media (max-width: 520px) {
+    header { justify-content: flex-start; }
+    header p.header-counter { white-space: normal; }
+}
+
+/* Section heading with divider */
+.section-head { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 3px solid var(--soft); }
+.section-title { margin: 0; font-size: 34px; font-weight: 800; line-height: 1.15; }
+.section-sub { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
+
+/* Inputs: clearer boundaries */
+input[type=text], select, input[type=file] {
+    border: 2px solid #cbd5e1;
+    background: #fff;
+}
+input[type=text]:hover, select:hover { border-color: #94a3b8; }
+input[type=text]:focus, select:focus, input[type=file]:focus {
+    border-color: var(--pink);
+    outline: 3px solid var(--line);
+}
+
+/* Two-column rows on desktop */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+@media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
+
+/* Helper text under labels */
+.field-hint { display: block; margin-top: 4px; color: var(--muted); font-size: 12.5px; font-weight: 400; }
+.badge-upload > label { display: block; }
+.badge-upload .field-hint { margin: 2px 0 0; }
+
+/* Tier cards: crisp border, obvious selected state */
+.tier { position: relative; }
+.tier span { background: #fff; border: 2px solid #cbd5e1; transition: border-color .15s, background-color .15s, box-shadow .15s; }
+.tier:hover span { border-color: var(--pink); }
+.tier input:checked + span {
+    background: #fff0f6;
+    border-color: var(--pink-dark);
+    box-shadow: 0 0 0 1px var(--pink-dark), 0 6px 16px rgba(236, 72, 153, 0.25);
+}
+.tier input:checked + span b::after {
+    content: "\2713";
+    display: inline-grid;
+    place-items: center;
+    width: 20px; height: 20px;
+    margin-left: 8px;
+    border-radius: 50%;
+    background: var(--pink-dark);
+    color: #fff;
+    font-size: 12px;
+    vertical-align: 1px;
+}
+.tier input:focus-visible + span { outline: 3px solid var(--pink); outline-offset: 2px; }
+
+/* Terms + submit grouped as one block */
+.form-submit { margin-top: 20px; padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: #fff8fb; }
+.form-submit .agree { margin-bottom: 14px; }
+.btn-primary { background: var(--pink-dark); font-size: 18px; padding: 16px; }
+.btn-primary:hover { background: #9d174d; }
+button:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
+
+/* Sort controls as a segmented control */
+.sort-controls { gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--soft); }
+.sort-pill { min-height: 34px; padding: 6px 16px; border-color: transparent; background: transparent; }
+.sort-pill.bg-white { background: transparent; }
+.sort-pill.bg-pink-600 { background: var(--pink-dark); border-color: var(--pink-dark); }
+.sort-pill.bg-pink-600:hover { background: var(--pink-dark); }
+
+/* Attendee table */
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; }
+.attendee-table { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 14px; }
+.attendee-table th {
+    padding: 12px 14px;
+    background: var(--soft);
+    color: var(--pink-dark);
+    font-size: 13px;
+    font-weight: 700;
+    text-align: left;
+    white-space: nowrap;
+}
+.attendee-table td { padding: 12px 14px; border-top: 1px solid var(--soft); vertical-align: middle; }
+.attendee-table tbody tr:hover { background: #fff8fb; }
+.attendee-table .num { text-align: right; white-space: nowrap; }
+.attendee-table td small { display: block; margin-top: 2px; }
+.attendee-table td .attendee-status { display: inline-block; margin-top: 4px; }
+.attendee-table .code { font-family: ui-monospace, Consolas, monospace; font-size: 13px; color: var(--pink-dark); }
+.who { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.who img { width: 36px; height: 36px; border: 2px solid var(--line); border-radius: 50%; object-fit: cover; flex: none; }

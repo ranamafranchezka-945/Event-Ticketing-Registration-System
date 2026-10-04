@@ -65,7 +65,10 @@
 
     <!-- REGISTRATION FORM -->
     <section class="box" id="register">
-        <h2>Register</h2>
+        <div class="section-head">
+            <h2 class="section-title">Register</h2>
+            <p class="section-sub">Fill in your details, pick a date and tier, and your ticket is ready in seconds.</p>
+        </div>
 
         <!-- Error messages -->
         <?php if (!empty($errors)): ?>
@@ -81,17 +84,26 @@
 
         <form method="post" action="index.php" enctype="multipart/form-data">
 
-            <label>Full name
-                <input type="text" name="name" value="<?= e($name) ?>">
-            </label>
+            <div class="form-row">
+                <label>Full name
+                    <input type="text" name="name" value="<?= e($name) ?>" autocomplete="name">
+                </label>
 
-            <label>Email
-                <input type="text" name="email" value="<?= e($email) ?>">
-            </label>
+                <label>Email
+                    <input type="text" name="email" value="<?= e($email) ?>" autocomplete="email">
+                </label>
+            </div>
 
-            <label>Age
-                <input type="text" name="age" value="<?= e($age) ?>">
-            </label>
+            <div class="form-row">
+                <label>Age
+                    <input type="text" name="age" value="<?= e($age) ?>" inputmode="numeric">
+                </label>
+
+                <label>Number of tickets
+                    <input type="text" name="qty" value="<?= e($qty) ?>" inputmode="numeric">
+                    <span class="field-hint">1 to 10 tickets per registration</span>
+                </label>
+            </div>
 
             <!-- Event dropdown -->
             <label>Event
@@ -138,25 +150,24 @@
                 <?php endforeach; ?>
             </div>
 
-            <label>Number of tickets
-                <input type="text" name="qty" value="<?= e($qty) ?>">
-            </label>
-
             <div class="badge-upload">
-                <label for="badge-photo">Badge photo (JPG, PNG or WebP, max 2 MB)</label>
-                <input id="badge-photo" type="file" name="badge_photo" accept=".jpg,.jpeg,.png,.webp">
+                <label for="badge-photo">Badge photo</label>
+                <span class="field-hint" id="badge-hint">JPG, PNG or WebP, max 2 MB</span>
+                <input id="badge-photo" aria-describedby="badge-hint" type="file" name="badge_photo" accept=".jpg,.jpeg,.png,.webp">
                 <?php if (is_array($temp_badge) && isset($temp_badge['filename'], $temp_badge['original_name']) && basename($temp_badge['filename']) === $temp_badge['filename'] && is_file('uploads/temp_badges/' . $temp_badge['filename'])): ?>
                 <input type="hidden" name="temp_badge" value="<?= e($temp_badge['filename']) ?>">
                 <p class="badge-attached"><span aria-hidden="true">&#10003;</span> Photo already attached: <strong><?= e($temp_badge['original_name']) ?></strong></p>
                 <?php endif; ?>
             </div>
 
-            <label class="agree">
-                <input type="checkbox" name="agree" value="yes" <?= $agree === 'yes' ? 'checked' : '' ?>>
-                I accept the event terms.
-            </label>
+            <div class="form-submit">
+                <label class="agree">
+                    <input type="checkbox" name="agree" value="yes" <?= $agree === 'yes' ? 'checked' : '' ?>>
+                    I accept the event terms.
+                </label>
 
-            <button type="submit">Get my ticket</button>
+                <button type="submit" class="btn-primary">Get my ticket</button>
+            </div>
         </form>
     </section>
 
@@ -178,29 +189,47 @@
         <?php if (empty($people)): ?>
             <p>No one has registered yet.</p>
         <?php else: ?>
-            <?php foreach ($people as $number => $person): ?>
-            <div class="person">
-                <?php if (!empty($person['photo'])): ?>
-                <img src="uploads/<?= e($person['photo']) ?>" alt="Badge photo">
-                <?php endif; ?>
-
-                <div>
-                    <b><?= $number + 1 ?>. <?= e($person['name']) ?></b><br>
-                    <small>
-                        <?= e($person['event_name'] ?? ($events[$person['event']]['name'] ?? $person['event'])) ?> |
-                        <?= e($person['event_date'] ?? ($events[$person['event']]['date'] ?? '')) ?>
-                        <?php if (!empty($person['event_guest'])): ?> | Guest: <?= e($person['event_guest']) ?><?php endif; ?> |
-                        <?= e($tiers[$person['tier']]['label']) ?> x <?= $person['qty'] ?> |
-                        <?= e($person['id']) ?>
-                    </small><br>
-                </div>
-
-                <div class="money">
-                    <b><?= e(peso($person['total'])) ?></b><br>
-                    <small class="attendee-status"><?= e(get_level($person['total'])) ?></small>
-                </div>
+            <div class="table-wrap">
+                <table class="attendee-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Name</th>
+                            <th scope="col">Event</th>
+                            <th scope="col">Date</th>
+                            <th scope="col">Tier</th>
+                            <th scope="col">Ticket code</th>
+                            <th scope="col" class="num">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($people as $number => $person): ?>
+                        <tr>
+                            <td><?= $number + 1 ?></td>
+                            <td>
+                                <span class="who">
+                                    <?php if (!empty($person['photo'])): ?>
+                                    <img src="uploads/<?= e($person['photo']) ?>" alt="Badge photo of <?= e($person['name']) ?>">
+                                    <?php endif; ?>
+                                    <span><?= e($person['name']) ?></span>
+                                </span>
+                            </td>
+                            <td>
+                                <?= e($person['event_name'] ?? ($events[$person['event']]['name'] ?? $person['event'])) ?>
+                                <?php if (!empty($person['event_guest'])): ?><small>Guest: <?= e($person['event_guest']) ?></small><?php endif; ?>
+                            </td>
+                            <td><?= e($person['event_date'] ?? ($events[$person['event']]['date'] ?? '')) ?></td>
+                            <td><?= e($tiers[$person['tier']]['label']) ?> &times; <?= (int) $person['qty'] ?></td>
+                            <td><span class="code"><?= e($person['id']) ?></span></td>
+                            <td class="num">
+                                <b><?= e(peso($person['total'])) ?></b>
+                                <small class="attendee-status"><?= e(get_level($person['total'])) ?></small>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
             </div>
-            <?php endforeach; ?>
         <?php endif; ?>
     </section>
 
